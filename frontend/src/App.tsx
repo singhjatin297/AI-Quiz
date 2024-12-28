@@ -4,7 +4,7 @@ import { User } from "./components/User";
 import { io } from "socket.io-client";
 
 function App() {
-  const socket = io("http://localhost:4000");
+  const socket = io("http://localhost:3000");
 
   return (
     <BrowserRouter>

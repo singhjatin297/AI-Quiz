@@ -1,11 +1,11 @@
 import { IoManager } from "./managers/IoManager.js";
 
-export type AllowedSubmissions = 0 | 1 | 2 | 3;
+export type AllowedSubmission = 1 | 2 | 3 | 4;
 const PROBLEM_TIME_S = 20;
 
 interface User {
-  name: string;
   id: string;
+  name: string;
   points: number;
 }
 
@@ -13,16 +13,15 @@ interface Submission {
   problemId: string;
   userId: string;
   isCorrect: boolean;
-  optionSelected: AllowedSubmissions;
+  optionSelected: AllowedSubmission;
 }
-
 interface Problem {
   id: string;
   title: string;
   description: string;
   image?: string;
   startTime: number;
-  answer: AllowedSubmissions; // 0, 1, 2, 3
+  answer: AllowedSubmission;
   options: {
     id: number;
     title: string;
@@ -30,15 +29,15 @@ interface Problem {
   submissions: Submission[];
 }
 export class Quiz {
-  public roomId: string;
+  public roomID: string;
   private hasStarted: boolean;
   private problems: Problem[];
   private activeProblem: number;
   private users: User[];
   private currentState: "leaderboard" | "question" | "not_started" | "ended";
 
-  constructor(roomId: string) {
-    this.roomId = roomId;
+  constructor(roomID: string) {
+    this.roomID = roomID;
     this.hasStarted = false;
     this.problems = [];
     this.activeProblem = 0;
@@ -49,41 +48,36 @@ export class Quiz {
       this.debug();
     }, 10000);
   }
+
   debug() {
     console.log("----debug---");
-    console.log(this.roomId);
+    console.log(this.roomID);
     console.log(JSON.stringify(this.problems));
     console.log(this.users);
     console.log(this.currentState);
     console.log(this.activeProblem);
   }
+
   addProblem(problem: Problem) {
     this.problems.push(problem);
-    console.log(this.problems);
   }
+
   start() {
     this.hasStarted = true;
     this.setActiveProblem(this.problems[0]);
   }
 
   setActiveProblem(problem: Problem) {
-    console.log("set active problem");
     this.currentState = "question";
     problem.startTime = new Date().getTime();
     problem.submissions = [];
-    IoManager.getIo().to(this.roomId).emit("problem", {
-      problem,
-    });
-    // Todo: clear this if function moves ahead
-    setTimeout(() => {
-      this.sendLeaderboard();
-    }, PROBLEM_TIME_S * 1000);
+    IoManager.getIo().to(this.roomID).emit("problem", { problem });
   }
   sendLeaderboard() {
     console.log("send leaderboard");
     this.currentState = "leaderboard";
     const leaderboard = this.getLeaderboard();
-    IoManager.getIo().to(this.roomId).emit("leaderboard", {
+    IoManager.getIo().to(this.roomID).emit("leaderboard", {
       leaderboard,
     });
   }
@@ -122,7 +116,7 @@ export class Quiz {
     userId: string,
     roomId: string,
     problemId: string,
-    submission: AllowedSubmissions
+    submission: AllowedSubmission
   ) {
     console.log("userId");
     console.log(userId);

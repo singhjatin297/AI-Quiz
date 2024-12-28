@@ -52,3 +52,5 @@ coverage/
 # Git files
 .git/
 *.orig
+
+dist/

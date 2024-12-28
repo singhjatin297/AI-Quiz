@@ -1,21 +1,20 @@
 import { Socket } from "socket.io";
 import { QuizManager } from "./QuizManager";
-const ADMIN_PASSWORD = "ADMIN_PASSWORD";
 
 export class UserManager {
-  private quizManager;
+  private quizManager: QuizManager;
 
   constructor() {
     this.quizManager = new QuizManager();
   }
 
   addUser(socket: Socket) {
-    this.createHandlers(socket);
+    this.createHandler(socket);
   }
 
-  private createHandlers(socket: Socket) {
+  private createHandler(socket: Socket) {
     socket.on("join", (data) => {
-      const userId = this.quizManager.addUser(data.name, data.roomId);
+      const userId = this.quizManager.addUser(data.roomId, data.name);
       socket.emit("init", {
         userId,
         state: this.quizManager.getCurrentState(data.roomId),
@@ -24,29 +23,29 @@ export class UserManager {
     });
 
     socket.on("joinAdmin", (data) => {
-      if (data.password !== ADMIN_PASSWORD) {
+      if (data.password !== "ADMIN_PASSWORD") {
         return;
       }
-      console.log("join admin called");
 
       socket.on("createQuiz", (data) => {
-        this.quizManager.addQuiz(data.roomId);
+        this.quizManager.addQuiz(data.roomID);
       });
 
-      socket.on("createProblem", (data) => {
-        this.quizManager.addProblem(data.roomId, data.problem);
+      socket.on("addProblem", (data) => {
+        this.quizManager.addProblem(data.roomID, data.problem);
       });
 
       socket.on("next", (data) => {
-        this.quizManager.next(data.roomId);
+        this.quizManager.next(data.roomID);
       });
     });
 
     socket.on("submit", (data) => {
       const userId = data.userId;
-      const problemId = data.problemId;
+      const roomID = data.roomID;
       const submission = data.submission;
-      const roomId = data.roomId;
+      const problemId = data.problemId;
+
       if (
         submission != 0 &&
         submission != 1 &&
@@ -56,9 +55,8 @@ export class UserManager {
         console.error("issue while getting input " + submission);
         return;
       }
-      console.log("sub,itting");
-      console.log(roomId);
-      this.quizManager.submit(userId, roomId, problemId, submission);
+
+      this.quizManager.submit(userId, roomID, problemId, submission);
     });
   }
 }

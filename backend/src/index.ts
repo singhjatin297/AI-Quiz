@@ -9,6 +9,6 @@ io.listen(3000);
 const userManager = new UserManager();
 
 io.on("connection", (socket: Socket) => {
-  console.log("Server Connected");
   userManager.addUser(socket);
+  console.log("Server Connected");
 });
