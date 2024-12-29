@@ -1,63 +1,97 @@
-import React, { useEffect, useState } from "react";
-import { Socket } from "socket.io-client";
+import { useEffect, useState } from "react";
+import { io } from "socket.io-client";
+import { LeaderBoard } from "./leaderboard/LeaderBoard";
+import { Quiz } from "./Quiz";
 
-interface UserProps {
-  socket: Socket;
-}
-
-interface UserLoggedInProps {
-  socket: Socket;
-  roomId: string;
-  name: string;
-}
-
-export const User: React.FC<UserProps> = ({ socket }) => {
-  const [roomId, setRoomId] = useState("");
+export const User = () => {
   const [name, setName] = useState("");
   const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = () => {
-    setSubmitted(true);
-  };
-
+  const [code, setCode] = useState("");
   if (!submitted) {
     return (
       <div>
-        <div>Enter Room ID</div>
-        <input value={roomId} onChange={(e) => setRoomId(e.target.value)} />
-
-        <div>Enter Name</div>
-        <input value={name} onChange={(e) => setName(e.target.value)} />
-
-        <button type="submit" onClick={handleSubmit}>
-          JOIN
-        </button>
+        <div className="bg-gray-100 flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="mb-8">
+              <h1 className="text-2xl font-semibold mb-2 text-slate-600">
+                Enter the code to join
+              </h1>
+              <p className="text-gray-600">
+                It’s on the screen in front of you
+              </p>
+            </div>
+            <div className="mb-8">
+              <input
+                className="text-center w-64 p-2 border-2 border-purple-600 rounded-lg shadow-sm focus:outline-none focus:border-purple-800"
+                placeholder="1234 5678"
+                style={{ fontSize: "1rem" }}
+                type="text"
+                onChange={(e) => {
+                  setCode(e.target.value);
+                }}
+              />
+              <br /> <br />
+              <input
+                className="text-center w-64 p-2 border-2 border-purple-600 rounded-lg shadow-sm focus:outline-none focus:border-purple-800"
+                placeholder="Your name"
+                style={{ fontSize: "1rem" }}
+                type="text"
+                onChange={(e) => {
+                  setName(e.target.value);
+                }}
+              />
+            </div>
+            <button
+              className="bg-purple-600 text-white w-64 py-2 rounded-lg shadow-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-800 focus:ring-opacity-50"
+              style={{ fontSize: "1rem" }}
+              onClick={() => {
+                setSubmitted(true);
+              }}
+            >
+              Join
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
-  return <UserLoggedIn roomId={roomId} socket={socket} name={name} />;
+  return <UserLoggedin code={code} name={name} />;
 };
 
-export const UserLoggedIn: React.FC<UserLoggedInProps> = ({
-  socket: globalSocket,
-  roomId,
+export const UserLoggedin = ({
   name,
+  code,
+}: {
+  name: string;
+  code: string;
 }) => {
-  const [socket, setsocket] = useState<Socket | null>();
-  const [userId, setUserId] = useState("");
+  const [socket, setSocket] = useState<null | any>(null);
+  const roomId = code;
   const [currentState, setCurrentState] = useState("not_started");
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [question, setQuestion] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState<any>(null);
+  const [leaderboard, setLeaderboard] = useState<
+    Array<{
+      points: number;
+      name: string;
+      image: string;
+    }>
+  >([]);
+  const [userId, setUserId] = useState("");
 
   useEffect(() => {
-    setsocket(globalSocket);
+    const socket = io("https://sum-server.100xdevs.com");
+    setSocket(socket);
 
-    socket?.on("connect", () => {
-      socket?.emit("join", { roomId, name });
+    socket.on("connect", () => {
+      console.log(socket.id);
+      socket.emit("join", {
+        roomId,
+        name,
+      });
     });
 
-    socket?.on("init", ({ state, userId }) => {
+    socket.on("init", ({ userId, state }) => {
       setUserId(userId);
 
       if (state.leaderboard) {
@@ -65,44 +99,57 @@ export const UserLoggedIn: React.FC<UserLoggedInProps> = ({
       }
 
       if (state.problem) {
-        setQuestion(state.problem);
+        setCurrentQuestion(state.problem);
       }
 
       setCurrentState(state.type);
     });
 
-    socket?.on("leaderboard", (data) => {
+    socket.on("leaderboard", (data) => {
       setCurrentState("leaderboard");
       setLeaderboard(data.leaderboard);
     });
-
-    socket?.on("problem", (data) => {
-      setCurrentState("problem");
-      setQuestion(data.problem);
+    socket.on("problem", (data) => {
+      setCurrentState("question");
+      setCurrentQuestion(data.problem);
     });
-  }, [socket, globalSocket, name, roomId]);
+  }, []);
 
   if (currentState === "not_started") {
-    return <span>Not Started Page</span>;
-  } else if (currentState === "problem") {
+    return <div>This quiz hasnt started yet</div>;
+  }
+  if (currentState === "question") {
     return (
-      <div>
-        <span>Quiz</span>
-        {/* <Quiz /> */}
-      </div>
+      <Quiz
+        roomId={roomId}
+        userId={userId}
+        problemId={currentQuestion.id}
+        quizData={{
+          title: currentQuestion.description,
+          options: currentQuestion.options,
+        }}
+        socket={socket}
+      />
     );
-  } else if (currentState === "leaderboard") {
+  }
+
+  if (currentState === "leaderboard") {
     return (
-      <div>
-        <span>LeaderBoard</span>
-        {/* <Leaderboard /> */}
-      </div>
+      <LeaderBoard
+        leaderboardData={leaderboard.map((x: any) => ({
+          points: Number(x.points),
+          username: String(x.name),
+          profilePicture: x.image || "",
+        }))}
+      />
     );
   }
 
   return (
     <div>
-      <span>Quiz has ended {currentState}</span>
+      <br />
+      Quiz has ended
+      {currentState}
     </div>
   );
 };
