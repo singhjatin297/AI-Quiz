@@ -1,11 +1,12 @@
-import { IoManager } from "./managers/IoManager.js";
+import { Socket } from "socket.io";
+import { IoManager } from "./managers/IoManager";
 
-export type AllowedSubmission = 1 | 2 | 3 | 4;
+export type AllowedSubmissions = 0 | 1 | 2 | 3;
 const PROBLEM_TIME_S = 20;
 
 interface User {
-  id: string;
   name: string;
+  id: string;
   points: number;
 }
 
@@ -13,15 +14,16 @@ interface Submission {
   problemId: string;
   userId: string;
   isCorrect: boolean;
-  optionSelected: AllowedSubmission;
+  optionSelected: AllowedSubmissions;
 }
+
 interface Problem {
   id: string;
   title: string;
   description: string;
   image?: string;
   startTime: number;
-  answer: AllowedSubmission;
+  answer: AllowedSubmissions; // 0, 1, 2, 3
   options: {
     id: number;
     title: string;
@@ -29,15 +31,15 @@ interface Problem {
   submissions: Submission[];
 }
 export class Quiz {
-  public roomID: string;
+  public roomId: string;
   private hasStarted: boolean;
   private problems: Problem[];
   private activeProblem: number;
   private users: User[];
   private currentState: "leaderboard" | "question" | "not_started" | "ended";
 
-  constructor(roomID: string) {
-    this.roomID = roomID;
+  constructor(roomId: string) {
+    this.roomId = roomId;
     this.hasStarted = false;
     this.problems = [];
     this.activeProblem = 0;
@@ -48,41 +50,57 @@ export class Quiz {
       this.debug();
     }, 10000);
   }
-
   debug() {
     console.log("----debug---");
-    console.log(this.roomID);
+    console.log(this.roomId);
     console.log(JSON.stringify(this.problems));
     console.log(this.users);
     console.log(this.currentState);
     console.log(this.activeProblem);
   }
-
-  addProblem(problem: Problem) {
+  addProblem(problem: Problem, socket: Socket) {
     this.problems.push(problem);
-  }
+    console.log(this.problems);
 
+    socket.emit("problemAdded");
+  }
   start() {
     this.hasStarted = true;
     this.setActiveProblem(this.problems[0]);
   }
 
   setActiveProblem(problem: Problem) {
+    console.log("set active problem");
     this.currentState = "question";
     problem.startTime = new Date().getTime();
     problem.submissions = [];
-    IoManager.getIo().to(this.roomID).emit("problem", { problem });
+    IoManager.getIo().to(this.roomId).emit("problem", {
+      problem,
+    });
+    // Todo: clear this if function moves ahead
+    setTimeout(() => {
+      this.sendLeaderboard();
+    }, PROBLEM_TIME_S * 1000);
   }
   sendLeaderboard() {
     console.log("send leaderboard");
     this.currentState = "leaderboard";
     const leaderboard = this.getLeaderboard();
-    IoManager.getIo().to(this.roomID).emit("leaderboard", {
+    IoManager.getIo().to(this.roomId).emit("leaderboard", {
       leaderboard,
     });
   }
   next() {
+    console.log(
+      "Current active problem index before increment:",
+      this.activeProblem
+    );
+    console.log("Total problems available:", this.problems.length);
+
+    // Check if there are more problems available
     this.activeProblem++;
+    console.log(this.activeProblem);
+    console.log(this.problems);
     const problem = this.problems[this.activeProblem];
     if (problem) {
       this.setActiveProblem(problem);
@@ -116,7 +134,7 @@ export class Quiz {
     userId: string,
     roomId: string,
     problemId: string,
-    submission: AllowedSubmission
+    submission: AllowedSubmissions
   ) {
     console.log("userId");
     console.log(userId);

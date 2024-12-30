@@ -1,5 +1,4 @@
 import { Socket } from "socket.io-client";
-
 interface QuizControlsProps {
   socket: Socket;
   roomId: string;

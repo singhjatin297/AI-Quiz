@@ -1,12 +1,16 @@
 import "./App.css";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { User } from "./components/User";
+import { Admin } from "./components/Admin";
+import { Toaster } from "sonner";
 
 function App() {
   return (
     <BrowserRouter>
+      <Toaster />
       <Routes>
-        <Route path="/" element={<User />} />
+        <Route path="admin" element={<Admin />} />
+        <Route path="user" element={<User />} />
       </Routes>
     </BrowserRouter>
   );

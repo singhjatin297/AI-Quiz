@@ -80,7 +80,7 @@ export const UserLoggedin = ({
   const [userId, setUserId] = useState("");
 
   useEffect(() => {
-    const socket = io("https://sum-server.100xdevs.com");
+    const socket = io("http://localhost:3000");
     setSocket(socket);
 
     socket.on("connect", () => {

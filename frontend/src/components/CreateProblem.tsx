@@ -1,5 +1,6 @@
 import { Socket } from "socket.io-client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface CreateProblemProps {
   roomId: string;
@@ -24,6 +25,20 @@ export const CreateProblem: React.FC<CreateProblemProps> = ({
       },
     });
   };
+
+  useEffect(() => {
+    socket.on("problemAdded", () => {
+      toast.success("Problem added");
+      setTitle("");
+      setOptions(["", "", "", ""]);
+      setCorrectOption(0);
+    });
+
+    // Clean up the event listener when the component unmounts
+    return () => {
+      socket.off("problemAdded");
+    };
+  }, [socket]);
 
   return (
     <div>
