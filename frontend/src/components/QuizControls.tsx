@@ -12,6 +12,7 @@ export const QuizControls: React.FC<QuizControlsProps> = ({
     <div>
       Quiz controls
       <button
+        className="bg-black text-white font-semibold font-mono p-4 rounded-full"
         onClick={() => {
           socket.emit("next", {
             roomId,

@@ -116,7 +116,7 @@ export const UserLoggedin = ({
   }, []);
 
   if (currentState === "not_started") {
-    return <div>This quiz hasnt started yet</div>;
+    return <div>This quiz hasn't started yet</div>;
   }
   if (currentState === "question") {
     return (

@@ -1,5 +1,3 @@
-// BACK in 3 mins
-
 import { Socket } from "socket.io";
 import { QuizManager } from "./QuizManager";
 const ADMIN_PASSWORD = "ADMIN_PASSWORD";
@@ -29,13 +27,14 @@ export class UserManager {
       if (data.password !== ADMIN_PASSWORD) {
         return;
       }
-      console.log("join admi called");
+      console.log("join admin called");
 
       socket.on("createQuiz", (data) => {
         this.quizManager.addQuiz(data.roomId);
       });
 
       socket.on("createProblem", (data) => {
+        console.log("Create Problem called", data);
         this.quizManager.addProblem(data.roomId, data.problem, socket);
       });
 

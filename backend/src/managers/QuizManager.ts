@@ -31,7 +31,9 @@ export class QuizManager {
     socket: Socket
   ) {
     const quiz = this.getQuiz(roomId);
+    console.log(`Quiz for roomId ${roomId}:`, quiz); // Add this line to check if a quiz is retrieved
     if (!quiz) {
+      console.warn(`No quiz found for roomId ${roomId}`);
       return;
     }
     quiz.addProblem(

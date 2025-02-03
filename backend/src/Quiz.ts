@@ -23,7 +23,7 @@ interface Problem {
   description: string;
   image?: string;
   startTime: number;
-  answer: AllowedSubmissions; // 0, 1, 2, 3
+  answer: AllowedSubmissions;
   options: {
     id: number;
     title: string;
@@ -67,6 +67,7 @@ export class Quiz {
   start() {
     this.hasStarted = true;
     this.setActiveProblem(this.problems[0]);
+    console.log("Quiz Started", this.problems[0]);
   }
 
   setActiveProblem(problem: Problem) {
